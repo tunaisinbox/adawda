@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b101b">
+<title>VIBE SURVIVAL</title>
+<style>
+:root{color-scheme:dark;--bg:#0b101b;--panel:#151f30;--line:#2b3a50;--cyan:#68d8ff;--red:#ff637b;--muted:#9aabc1}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -10%,#263c5b 0,transparent 48%),var(--bg);color:#f4f7fb;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:hidden}
+main{width:min(680px,100%);margin:auto;padding:18px 16px 34px}.top,.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{font-size:11px;letter-spacing:.2em;color:var(--cyan);font-weight:900}.status{font-size:10px;border:1px solid var(--line);padding:6px 9px;border-radius:99px;color:var(--muted)}
+h1{font-size:clamp(34px,10vw,58px);letter-spacing:-.07em;margin:30px 0 2px;text-align:center}.sub{text-align:center;color:var(--muted);font-size:11px;letter-spacing:.18em}
+.panel{background:linear-gradient(155deg,#1a273b,#121a28);border:1px solid var(--line);border-radius:22px;padding:19px;margin-top:17px;box-shadow:0 18px 50px #0003}
+.timer{text-align:center;font-size:clamp(46px,13vw,68px);font-variant-numeric:tabular-nums;font-weight:850;letter-spacing:-.06em;margin:8px 0 0}.caption{text-align:center;color:var(--muted);font-size:10px;letter-spacing:.18em}
+.level{text-align:center;font-size:30px;font-weight:950;color:var(--cyan);margin:13px 0 3px}.levelnote{text-align:center;color:#b7c9dc;font-size:12px}
+.meter{height:8px;background:#2a394d;border-radius:99px;overflow:hidden;margin:18px 0 7px}.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#58cfff,#ff7182);transition:width .2s}
+button{font:inherit;color:inherit;border:1px solid var(--line);background:#202d40;border-radius:14px;padding:14px 12px;font-weight:800;cursor:pointer;min-height:50px}
+button:disabled{opacity:.4;cursor:not-allowed}.primary{background:linear-gradient(120deg,#087db1,#2562b7);border:0}.giveup{background:linear-gradient(120deg,#9e3048,#68283a);border:0;width:100%;font-size:16px}
+.bigstart{width:100%;font-size:17px;letter-spacing:.06em;margin-top:17px}.hidden{display:none!important}
+.small{font-size:12px;color:var(--muted);line-height:1.7}.title{font-size:13px;font-weight:900;margin:0 0 10px}
+.log{min-height:43px;background:#0e1521;border:1px solid var(--line);border-radius:12px;padding:11px;font-size:12px;color:#c4d2e3;line-height:1.6}
+.nav{display:flex;gap:8px;margin-top:13px}.nav button{flex:1;font-size:12px;padding:10px 4px;min-height:42px}
+.footer{text-align:center;font-size:10px;color:#71839b;margin:18px 5px 0}
+body.playing{animation:screenpulse 4s ease-in-out infinite}body.level4{background:radial-gradient(ellipse at 50% 40%,#4a1e31 0,transparent 58%),#100d18}
+@keyframes screenpulse{0%,100%{filter:none}50%{filter:brightness(1.08)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-2px)}40%{transform:translateX(2px)}60%{transform:translateX(-1px)}80%{transform:translateX(1px)}}
+body.hit main{animation:shake .18s linear}
+.result{font-size:13px;color:#c7d7e9;text-align:center;line-height:1.8;margin-top:12px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+ <div class="top"><div class="brand">HAPTIC ARCADE / 001</div><div class="status" id="status">READY</div></div>
+ <h1>VIBE SURVIVAL</h1><div class="sub">DON'T LET THE BUZZ GET YOU</div>
+ <section class="panel">
+  <div class="caption">SURVIVAL TIME</div><div class="timer" id="timer">00:00.0</div>
+  <div class="level" id="level">LEVEL 1</div><div class="levelnote" id="levelNote">準備はいい？</div>
+  <div class="meter"><i id="meter"></i></div>
+  <div class="row small"><span id="phase">READY TO PLAY</span><span id="score">SCORE 0</span></div>
+  <button class="primary bigstart" id="start">▶ GAME START</button>
+  <button class="giveup hidden" id="giveup">GIVE UP</button>
+  <div class="result hidden" id="result"></div>
+ </section>
+ <section class="panel">
+  <p class="title">HOW TO PLAY</p>
+  <p class="small">ゲームが始まると、段階的にバイブ風の電子音・画面演出・対応端末での振動が発生します。時間が長いほどレベルとスコアが上昇。限界を感じたらGIVE UPを押して終了！</p>
+  <div class="log" id="log" aria-live="polite">ゲーム開始を待っています。</div>
+ </section>
+ <section class="panel">
+  <p class="title">SHARE YOUR RECORD</p>
+  <p class="small">結果をXにポストして記録を共有しよう。</p>
+  <button class="primary" id="share" style="width:100%" disabled>𝕏 POST RESULT</button>
+  <p class="small">#VibeSurvival20261113X9</p>
+ </section>
+ <div class="nav"><button id="back">← 戻る</button><button id="forward">進む →</button><button id="reload">↻ 更新</button></div>
+ <div class="footer">刺激はゲーム演出用の範囲です。実際の痛みや不快感を感じたらすぐに終了してください。</div>
+</main>
+<script>
+(()=>{
+ const $=id=>document.getElementById(id);
+ const tag='#VibeSurvival20261113X9';
+ let running=false,startedAt=0,elapsed=0,tick=null,score=0,level=1,lastCue=-1,audioCtx=null,hiddenDuringGame=false;
+ let motionEnabled=false,lastMotion=0;
+ const notes=['準備はいい？','リズムに乗ろう','まだまだこれから','警戒レベル上昇','ファイナルラウンド'];
+ function fmt(ms){const t=ms/1000;return String(Math.floor(t/60)).padStart(2,'0')+':'+(t%60).toFixed(1).padStart(4,'0')}
+ function buzz(pattern){if(navigator.vibrate){try{navigator.vibrate(pattern)}catch(e){}}}
+ function beep(freq,duration=.12,volume=.035){
+  if(!running)return;
+  try{
+   audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();
+   if(audioCtx.state==='suspended')audioCtx.resume();
+   const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+   o.type='sawtooth';o.frequency.setValueAtTime(freq,audioCtx.currentTime);
+   g.gain.setValueAtTime(.0001,audioCtx.currentTime);
+   g.gain.exponentialRampToValueAtTime(volume,audioCtx.currentTime+.012);
+   g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+duration);
+   o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+duration+.02);
+  }catch(e){}
+ }
+ function update(){
+  elapsed=Date.now()-startedAt;const sec=Math.floor(elapsed/1000);
+  level=Math.min(5,1+Math.floor(sec/12));
+  score=Math.floor(sec*10)+(level-1)*100;
+  $('timer').textContent=fmt(elapsed);$('level').textContent='LEVEL '+level;
+  $('levelNote').textContent=notes[level-1];$('score').textContent='SCORE '+score;
+  $('phase').textContent='SURVIVE THE BUZZ';
+  $('meter').style.width=((sec%60)/60*100)+'%';
+  document.body.classList.toggle('level4',level>=4);
+  if(sec>0&&sec%4===0&&sec!==lastCue){
+   lastCue=sec;
+   // Brief, moderate haptic pulse and synthesized "brr" cue; browser support varies.
+   buzz(level<3?[90,55,90]:[130,70,130]);
+   beep(115+level*22,.17,.035);
+   document.body.classList.add('hit');setTimeout(()=>$('body'),0);
+   setTimeout(()=>document.body.classList.remove('hit'),190);
+  }
+ }
+ function finish(reason){
+  if(!running)return;
+  running=false;clearInterval(tick);elapsed=Date.now()-startedAt;
+  if(navigator.vibrate)buzz(0);
+  if(audioCtx){try{audioCtx.close()}catch(e){}audioCtx=null}
+  updateFinal();$('status').textContent='FINISHED';$('start').classList.remove('hidden');
+  $('start').textContent='↻ PLAY AGAIN';$('giveup').classList.add('hidden');
+  $('share').disabled=false;document.body.classList.remove('playing','level4');
+  $('result').classList.remove('hidden');
+  $('result').innerHTML='RESULT<br><strong>'+fmt(elapsed)+'</strong><br>SCORE <strong>'+score+'</strong><br>'+reason;
+  $('log').textContent=reason+' 記録を保存してXで共有できます。';
+ }
+ function updateFinal(){elapsed=Math.max(0,Date.now()-startedAt);$('timer').textContent=fmt(elapsed)}
+ $('start').onclick=()=>{
+  if(running)return;
+  running=true;startedAt=Date.now()-elapsed;lastCue=-1;
+  $('status').textContent='PLAYING';$('start').classList.add('hidden');
+  $('giveup').classList.remove('hidden');$('result').classList.add('hidden');
+  $('share').disabled=true;document.body.classList.add('playing');
+  $('log').textContent='チャレンジ中！いつでもGIVE UPできます。';
+  // User gesture starts audio context. No separate sound or vibration test/settings.
+  try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume()}catch(e){}
+  buzz(80);beep(220,.08,.025);tick=setInterval(update,100);
+ };
+ $('giveup').onclick=()=>finish('GIVE UP — 自分のタイミングで終了！');
+ document.addEventListener('visibilitychange',()=>{
+  if(running&&document.hidden){hiddenDuringGame=true;score=Math.max(0,score-100);$('log').textContent='ゲーム画面から離れたことを検知。スコア -100';}
+  else if(running&&!document.hidden&&hiddenDuringGame){$('log').textContent='ゲームに戻りました。チャレンジ続行中。';hiddenDuringGame=false;}
+ });
+ // Best-effort motion detection. No settings UI and no attempt to infer physical distance.
+ function onMotion(e){
+  if(!running||!e.accelerationIncludingGravity)return;
+  const a=e.accelerationIncludingGravity;
+  const mag=Math.hypot(a.x||0,a.y||0,a.z||0),now=Date.now();
+  if(Math.abs(mag-9.8)>7&&now-lastMotion>5000){lastMotion=now;score+=20;$('score').textContent='SCORE '+score;$('log').textContent='端末の動きを検知！ボーナス +20';}
+ }
+ if('DeviceMotionEvent'in window){
+  try{
+   if(typeof DeviceMotionEvent.requestPermission==='function'){
+    // iOS requires explicit permission; do not show a separate settings prompt.
+    // If not already permitted, motion sensing remains unavailable.
+   }else{window.addEventListener('devicemotion',onMotion);motionEnabled=true;}
+  }catch(e){}
+ }
+ $('share').onclick=()=>{
+  const text=`VIBE SURVIVAL 記録：${fmt(elapsed)} / SCORE ${score} ${tag}`;
+  const url='https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(location.href);
+  window.open(url,'_blank','noopener,noreferrer');
+ };
+ $('back').onclick=()=>history.back();$('forward').onclick=()=>history.forward();$('reload').onclick=()=>location.reload();
+})();
+</script>
+</body></html>
